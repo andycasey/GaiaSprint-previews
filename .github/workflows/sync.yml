@@ -1,0 +1,32 @@
+name: Sync PR previews
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [sync]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Build previews for open PRs
+        run: ./sync.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Optional: a token with write access to davidwhogg/GaiaSprint issues,
+          # used only to post/refresh the "preview ready" comment on each PR.
+          PR_COMMENT_TOKEN: ${{ secrets.PR_COMMENT_TOKEN }}
